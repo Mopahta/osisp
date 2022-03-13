@@ -153,6 +153,7 @@ void printEqualFiles(listEl *tmp1, listEl *tmp2){
                 formatOutput(outputFile, tmp1);                
                 header = 0;
             }
+            formatOutput(stdout, tmp2);
             formatOutput(outputFile, tmp2);
             free(tmp2->info.name);
             if (tmp2->next){
