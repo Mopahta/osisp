@@ -1,2 +1,0 @@
-./deb.c
-./hello_linux.c

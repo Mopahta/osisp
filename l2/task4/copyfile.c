@@ -4,7 +4,7 @@
 
 void main(int argc, char *argv[]){
     if (argc < 3){
-        perror("Input file not specified.\nUsage:\n\tcopyfile src dest");
+        fprintf(stderr, "Input file not specified.\nUsage:\n\tcopyfile src dest");
         return;
     }
 
@@ -26,8 +26,9 @@ void main(int argc, char *argv[]){
         printf("Can't open file %s", argv[2]);
     }
 
-    stat(argv[1], &info);
-
+    if(stat(argv[1], &info)){
+        fprintf(stderr, "Couldn't get file status: %s\n", argv[1]);
+    }
 
     while ((inp = fgetc(srcFile)) != EOF){
         fputc(inp, destFile);

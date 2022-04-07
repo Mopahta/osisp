@@ -28,9 +28,11 @@ void searchForFiles(listHead *list, char *path){
 
     path = completeDir(path);
     push(stack, path);
+    printf("%s\n", path);
 
     while(stack->head){
         char *currPath = pop(stack);
+        printf("%s\n", currPath);
         processDir(list, currPath, stack);
         free(currPath);
     }
@@ -55,10 +57,11 @@ void processDir(listHead *list, char *path, struct stack_t *stack){
     struct stat fileStat;
     off_t size;
 
+    printf("%s", path);
     dir = opendir(path);
     if (dir == NULL){
-        fprintf(stderr, "Couldn't open directory: %s", path);
-        fprintf(outputFile, "Couldn't open directory: %s", path);
+        fprintf(stderr, "Couldn't open directory: %s\n", path);
+        fprintf(outputFile, "Couldn't open directory: %s\n", path);
         exit(EXIT_FAILURE);
     }
 
@@ -126,7 +129,7 @@ int areFilesEqual(char *path1, char *path2){
 }
 
 void formatOutput(FILE *stream, listEl *info){
-    fprintf(stream, "%s\n\tSize: %i B\n\tTime created: %s\tAccess mode: %s%s%s%s%s%s%s%s%s%s\n\tInode number: %i:\n", 
+    fprintf(stream, "%s\n\tSize: %i B\n\tTime created: %s\tAccess mode: %s%s%s%s%s%s%s%s%s%s\n\tInode number: %i\n", 
             info->info.name, 
             info->info.size, 
             ctime(&(info->info.cr_time)), 
@@ -149,6 +152,7 @@ void printEqualFiles(listEl *tmp1, listEl *tmp2){
         if (tmp1 != tmp2 && tmp1->info.size == tmp2->info.size && areFilesEqual(tmp1->info.name, tmp2->info.name)){
             if (header){
                 printf("\n");
+                fprintf(outputFile, "\n");
                 formatOutput(stdout, tmp1);
                 formatOutput(outputFile, tmp1);                
                 header = 0;

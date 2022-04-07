@@ -13,6 +13,11 @@ void main(int argc, char* argv[]){
     FILE *outputFile;
 
     outputFile = fopen(argv[1], "w");
+
+    if (!outputFile){
+        fprintf(stderr, "Couldn't open file %s", argv[1]);
+        return;
+    }
     char inp;
 
     while ((inp = fgetc(stdin)) != 6){
