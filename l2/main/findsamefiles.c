@@ -28,11 +28,9 @@ void searchForFiles(listHead *list, char *path){
 
     path = completeDir(path);
     push(stack, path);
-    printf("%s\n", path);
 
     while(stack->head){
         char *currPath = pop(stack);
-        printf("%s\n", currPath);
         processDir(list, currPath, stack);
         free(currPath);
     }
@@ -57,12 +55,11 @@ void processDir(listHead *list, char *path, struct stack_t *stack){
     struct stat fileStat;
     off_t size;
 
-    printf("%s", path);
     dir = opendir(path);
     if (dir == NULL){
         fprintf(stderr, "Couldn't open directory: %s\n", path);
         fprintf(outputFile, "Couldn't open directory: %s\n", path);
-        exit(EXIT_FAILURE);
+        return;
     }
 
     int currDirLen = strlen(path);
@@ -97,6 +94,9 @@ void processDir(listHead *list, char *path, struct stack_t *stack){
 }
 
 int areFilesEqual(char *path1, char *path2){
+    if (!(strcmp(path1, "") || strcmp(path2, ""))){
+        return 0;
+    }
     FILE *file1 = fopen(path1, "rb");
     if (!file1){
         fprintf(stderr, "Couldn't open file %s\n", path1);
@@ -159,15 +159,9 @@ void printEqualFiles(listEl *tmp1, listEl *tmp2){
             }
             formatOutput(stdout, tmp2);
             formatOutput(outputFile, tmp2);
-            free(tmp2->info.name);
-            if (tmp2->next){
-                tmp2->info = tmp2->next->info;
-                tmp2->next = tmp2->next->next;
-            }
+            strcpy(tmp2->info.name, "");
         }
-        else {
-            tmp2 = tmp2->next;
-        }
+        tmp2 = tmp2->next;
     }
 }
 
@@ -177,7 +171,7 @@ void compareFiles(listHead *list1, listHead *list2){
     listEl *tmp2;
     while (tmp1){
         header = 1;
-        tmp2 = list1->head;
+        tmp2 = tmp1;
         printEqualFiles(tmp1, tmp2);
         tmp2 = list2->head;
         printEqualFiles(tmp1, tmp2);
@@ -193,6 +187,9 @@ void main(int argc, char *argv[]){
         return;
     }
 
+    char* path1 = strdup(argv[1]);
+    char* path2 = strdup(argv[2]);
+
     outputFile = fopen(argv[3], "wr+");
 	if (outputFile == NULL){
 		fprintf(stderr, "Couldn't create file %s", outputFile);
@@ -200,14 +197,17 @@ void main(int argc, char *argv[]){
 	}
 	
     listHead *list1 = initList();
-    searchForFiles(list1, argv[1]);
+    searchForFiles(list1, path1);
     //printList(list1);
 
     listHead *list2 = initList();
-    searchForFiles(list2, argv[2]);
+    searchForFiles(list2, path2);
     //printList(list2);
 
     compareFiles(list1, list2);
 
+    freeList(list1);
+    freeList(list2);
+    
 	fclose(outputFile);
 }

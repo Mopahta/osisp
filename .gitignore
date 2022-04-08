@@ -1,6 +1,8 @@
 l2/.vscode
 l2/main/findsamefiles
-l1/task1/printtext
+l2/task1/printtext
 l2/task2/writetofile
 l2/task3/readfromfilegroups
 l2/task4/copyfile
+l2/task5/outputdir
+*.txt
