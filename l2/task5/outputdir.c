@@ -12,8 +12,6 @@ void printDirContents(char *path){
 }
 
 void main(){
-    DIR *dir;
-
     printf("Current dir contents:\n");
     printDirContents(".");
     printf("Root dir contents:\n");

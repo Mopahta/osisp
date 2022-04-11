@@ -62,8 +62,6 @@ void processDir(listHead *list, char *path, struct stack_t *stack){
         return;
     }
 
-    int currDirLen = strlen(path);
-
     while ((item = readdir(dir)) != NULL){
         if (strcmp(item->d_name, ".") & strcmp(item->d_name, "..")){
             if (item->d_type == DT_REG){
@@ -83,10 +81,11 @@ void processDir(listHead *list, char *path, struct stack_t *stack){
                 }
             }
             else if (item->d_type == DT_DIR){
-                char *tempDir = (char *) malloc(sizeof(char)*currDirLen*strlen(item->d_name));
+                char *tempDir = (char *) malloc(sizeof(char)*PATH_MAX);
                 strcpy(tempDir, path);
                 tempDir = completeDir(tempDir);
                 push(stack, strcat(tempDir, item->d_name));
+                free(tempDir);
             }
         }
     }
@@ -129,8 +128,10 @@ int areFilesEqual(char *path1, char *path2){
 }
 
 void formatOutput(FILE *stream, listEl *info){
+    char *fullpath = realpath(info->info.name, NULL);
+
     fprintf(stream, "%s\n\tSize: %i B\n\tTime created: %s\tAccess mode: %s%s%s%s%s%s%s%s%s%s\n\tInode number: %i\n", 
-            info->info.name, 
+            fullpath, 
             info->info.size, 
             ctime(&(info->info.cr_time)), 
             S_ISDIR(info->info.acc_mode) ? "d" : "-",
@@ -144,6 +145,8 @@ void formatOutput(FILE *stream, listEl *info){
             info->info.acc_mode & S_IWOTH ? "w" : "-",
             info->info.acc_mode & S_IXOTH ? "x" : "-",
             info->info.inode);
+        
+    free(fullpath);
 }
 
 void printEqualFiles(listEl *tmp1, listEl *tmp2){
@@ -186,9 +189,11 @@ void main(int argc, char *argv[]){
         fprintf(stderr, "Not enough parameters.\nUsage:\n\t%s <dir_1> <dir_2> <output_file>\n", argv[0]);
         return;
     }
-
-    char* path1 = strdup(argv[1]);
-    char* path2 = strdup(argv[2]);
+    char* path1 = (char *) malloc(sizeof(char)*PATH_MAX);
+    char* path2 = (char *) malloc(sizeof(char)*PATH_MAX);
+    
+    strcpy(path1, argv[1]);
+    strcpy(path2, argv[2]);
 
     outputFile = fopen(argv[3], "wr+");
 	if (outputFile == NULL){
@@ -203,6 +208,9 @@ void main(int argc, char *argv[]){
     listHead *list2 = initList();
     searchForFiles(list2, path2);
     //printList(list2);
+
+    free(path1);
+    free(path2);
 
     compareFiles(list1, list2);
 
