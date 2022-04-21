@@ -10,9 +10,37 @@
 #include <sys/wait.h>
 
 #include "stack.h"
+#include "list.h"
 
 long maxChildProcesses;
-int *processStatus;
+
+void updateProcStatus(listHead *list){
+    listEl *tmp = list->head;
+
+    while (tmp){
+        waitpid(tmp->pid, &(tmp->status), WNOHANG);
+        tmp = tmp->next;
+    }
+}
+
+void deleteTerminated(listHead *list){
+    while (list->head && WIFEXITED(list->head->status)){
+        deleteFirstEl(list);
+    }
+    listEl *tmp = list->head;
+    
+    while (list->amount > 1 && tmp->next){
+        if (WIFEXITED(tmp->next->status)){
+            list->amount--;
+            listEl *toDelete = tmp->next;
+            tmp->next = tmp->next->next;
+            free(toDelete);
+        }
+        else {
+            tmp = tmp->next;
+        }
+    }
+}
 
 int countWordsInFile(char *filename){
     FILE *file = fopen(filename, "r");
@@ -67,8 +95,7 @@ char *completeDir(char *path){
 		return strcat(path, "/");
 }
 
-void processDir(char *path, struct stack_t *stack){
-    static int processCount = 0;
+void processDir(char *path, struct stack_t *stack, listHead *list){
     struct dirent *item;
     DIR *dir = opendir(path);
 
@@ -88,24 +115,13 @@ void processDir(char *path, struct stack_t *stack){
                     countWordsInFile(tempDir);
                     free(path);
                     free(tempDir);
-                    exit(0);
+                    exit(EXIT_SUCCESS);
                 }
                 else if (pid > 0){
-                    waitpid(pid, &processStatus[processCount], WNOHANG);
-                    processCount++;
-                    while (processCount == maxChildProcesses){
-                        for (int i = 0; i < processCount; i++){
-                            if (WIFEXITED(processStatus[i])){
-                                
-                            }
-                        }
-                        // if ((wait(NULL)) >= 0){
-                        //     processCount--;
-                        // }
-                        // else {
-                        //     fprintf(stderr, "Failed waiting for child processes to terminate.\n");
-                        //     exit(EXIT_FAILURE);
-                        // }
+                    addToList(list, 1, pid);
+                    while (list->amount >= maxChildProcesses){
+                        updateProcStatus(list);
+                        deleteTerminated(list);
                     }
                 }
                 else {
@@ -127,16 +143,18 @@ void processDir(char *path, struct stack_t *stack){
 
 void analyzeFiles(char *path){
     struct stack_t *stack = newStack();
+    listHead *list = initList();
 
     path = completeDir(path);
     push(stack, path);
 
     while(stack->head){
         char *currPath = pop(stack);
-        processDir(currPath, stack);
+        processDir(currPath, stack, list);
         free(currPath);
     }
     clearStack(stack);
+    freeList(list);
 }
 
 int main(int argc, char *argv[]){
@@ -168,11 +186,9 @@ int main(int argc, char *argv[]){
 
     char *path = (char *) malloc(sizeof(char) * PATH_MAX);
     strcpy(path, argv[1]);
-    processStatus = (int *) malloc(sizeof(int) * maxChildProcesses);
 
     analyzeFiles(path);
 
-    free(processStatus);
     free(path);
     return 0;
 }
