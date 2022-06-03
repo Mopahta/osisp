@@ -1,0 +1,3 @@
+3	1->(2,3) SIGUSR1   2->(4,5) SIGUSR1   5->6 SIGUSR1   
+ 6->(7,8) SIGUSR1   8->1 SIGUSR1 
+
